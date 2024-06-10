@@ -5,7 +5,7 @@ SOURCE_DIR = ./Source
 
 CC = gcc
 
-CC_FLAGS = -Wall -Werror
+CC_FLAGS = -Wall -Werror -std=c11
 LNK_FLAGS = -L. -lprog2
 
 #All .c files
