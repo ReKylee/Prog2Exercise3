@@ -77,9 +77,17 @@ int sortByID(ListElement ElemA, ListElement ElemB)
 	return 0;
 }
 
+int matchByID(ListElement Elem, KeyForListElement key)
+{
+	Worker* this_worker = (Worker*)Elem;
+	int this_id = this_worker->id;
+	int key_id = (int)key;
 
+	if(this_id == key_id) return 1;
+	return 0;
+}
 
-/* HR Management Functions */
+/* ******************* HR Management Functions ******************* */
 HrMgmt HrMgmtCreate() {
 	HrMgmt hrMgmt = malloc(sizeof(struct HrMgmt_s));
 	if (hrMgmt != NULL) {
@@ -104,7 +112,11 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
 	HrmWorkerRole role, float wage,
 	int numOfShifts)
 {
+	/* Get the worker and list*/
 	Worker* new_worker = malloc(sizeof(Worker));
+	LinkedList list = hrm->worker_linked_list;
+
+	/* THE ERROR GATES!! */
 	if(new_worker == NULL)
 		return HRM_OUT_OF_MEMORY;
 
@@ -116,10 +128,18 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
 		return HRM_INVALID_WAGE;
 	if(numOfShifts <= 0)
 		return HRM_INVALID_NUM_OF_SHIFTS;
+	if(linkedListFind(list,(KeyForListElement)id, matchByID) == LIST_SUCCESS)
+	{
+		/* Worker Hasn't been assigned memory for name; free it by itself*/
+		free(new_worker);
+		return HRM_WORKER_ALREADY_EXISTS;
+	}
+
 	new_worker->id = id;
 	new_worker->name = strdup(name);
 	if(new_worker->name == NULL)
 	{
+		/* Worker Hasn't been assigned memory for name; free it by itself*/
 		free(new_worker);
 		return HRM_OUT_OF_MEMORY;
 	}
@@ -127,14 +147,14 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
 	new_worker->wage = wage;
 	new_worker->numOfShifts = numOfShifts;
 
-	LinkedList list = hrm->worker_linked_list;
+	/* Linked List Stuff */
 	ListResult result =  linkedListInsertLast(list, new_worker);
 	if(result == LIST_OUT_OF_MEMORY)
 		return HRM_OUT_OF_MEMORY;
 	/* linkedListSortElements(list, sortByID);		*/
 
 	/* Since Linked List already clones the data,	*
-	 * we can free it afterwards					*/
+	 * we can free it afterward						*/
 	freeWorker(new_worker);
 
 	return HRM_SUCCESS;
