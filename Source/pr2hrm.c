@@ -195,7 +195,6 @@ int matchByShift(SetElement Elem, KeyForSetElement key)
 /* ******************* HR Management Functions ******************* */
 HrMgmt HrMgmtCreate()
 {
-
     HrMgmt hrMgmt = malloc(sizeof(HrMgmt_t));
     if (hrMgmt != NULL)
     {
@@ -209,7 +208,6 @@ HrMgmt HrMgmtCreate()
         }
         printf("pp3\n");
     }
-
     return hrMgmt;
 }
 
@@ -241,8 +239,8 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
     if (setGetSize(set) <= 0)
     {
         //TODO: FIX THIS MEMORY LEAK HAHAHAHAHAHHAHA
-    printf("pp4\n");
         free(new_worker);
+        printf("pp4\n");
         return HRM_NULL_ARGUMENT;
     }
 
@@ -464,11 +462,11 @@ HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
             return HRM_NO_WORKERS;
 
 
-        setPrintSorted(filtered_set,output,filtered_set_size+1,sortByID);
+        setPrint(filtered_set,output,filtered_set_size+1);
         setDestroy(filtered_set);
         return HRM_SUCCESS;
     }
-    setPrintSorted(hrm->worker_set,output,worker_set_size+1,sortByID);
+    setPrint(hrm->worker_set,output,worker_set_size+1);
     return HRM_SUCCESS;
 }
 
@@ -492,7 +490,7 @@ HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
 
     Set shift_set = ((Worker)worker_element)->shift_set;
 
-    setPrintSorted(shift_set,output,setGetSize(shift_set),sortByDay);
+    setPrint(shift_set,output,setGetSize(shift_set));
     return HRM_SUCCESS;
 }
 
@@ -516,6 +514,6 @@ HrmResult HrMgmtReportWorkersInShift(HrMgmt hrm, HrmShiftDay day, HrmShiftType t
     if(result != SET_SUCCESS)
         return HRM_NO_WORKERS;
     
-    setPrintSorted(workers_in_shift,output,setGetSize(workers_in_shift)+1, sortByID);
+    setPrint(workers_in_shift,output,setGetSize(workers_in_shift)+1);
     return HRM_SUCCESS;
 }

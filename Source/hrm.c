@@ -12,13 +12,13 @@ int main() {
     // Add some workers
     HrmResult result = HrMgmtAddWorker(hr_mgmt, "John Doe", 1, MANAGER, 15.0, 5);
     if (result != HRM_SUCCESS) {
-        printf("Error adding worker: %d\n", result);
+        printf("Error adding worker1: %d\n", result);
         return 1;
     }
 
     result = HrMgmtAddWorker(hr_mgmt, "Jane Smith", 2, WAITER, 12.0, 4);
     if (result != HRM_SUCCESS) {
-        printf("Error adding worker: %d\n", result);
+        printf("Error adding worker2: %d\n", result);
         return 1;
     }
 
