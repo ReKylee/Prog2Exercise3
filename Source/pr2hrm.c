@@ -65,8 +65,10 @@ void freeShift(SetElement Elem)
 
 void printShift(FILE* out, SetElement Elem)
 {
-    Shift this_shift = (Shift)Elem;
-    prog2_report_shift(out, this_shift->day, this_shift->type);
+    //This doesn't work, waiting for an answer from David
+    //prog2_report_shift(out, SUNDAY, MORNING);
+    if(((Shift)Elem)->day == SUNDAY) return;
+    prog2_report_shift(out, ((Shift)Elem)->day, ((Shift)Elem)->type);
 }
 
 
@@ -88,13 +90,11 @@ int sortByDay(SetElement ElemA, SetElement ElemB)
 /* return 1 if the element matches the key, 0 if not */
 int matchByDay(SetElement Elem, KeyForSetElement key)
 {
-    printf("day %d\n",*(HrmShiftType*)key);
     return (((Shift)Elem)->day == *(HrmShiftDay*)key);
 }
 /* return 1 if the element matches the key, 0 if not */
 int matchByType(SetElement Elem, KeyForSetElement key)
 {
-    printf("type %d\n",*(HrmShiftType*)key);
     return (((Shift)Elem)->type == *(HrmShiftType*)key);
 }
 
@@ -115,7 +115,10 @@ void freeWorker(SetElement Elem)
     free(worker->name);
     free(worker);
 }
-
+int filterSetCopyFunc(SetElement Elem, KeyForSetElement key)
+{
+    return 1;
+}
 SetElement copyWorker(SetElement Elem)
 {
     Worker new_worker = malloc(sizeof(Worker_t));
@@ -132,7 +135,8 @@ SetElement copyWorker(SetElement Elem)
         new_worker->role = this_worker->role;
         new_worker->wage = this_worker->wage;
         new_worker->num_available_shifts = this_worker->num_available_shifts;
-        SetResult result = setCreate(&(new_worker->shift_set),sortByDay, copyShift, freeShift, printShift);
+
+        SetResult result = setFilter(this_worker->shift_set, &(new_worker->shift_set), 0,filterSetCopyFunc);
         if(result != SET_SUCCESS)
             freeWorker(new_worker);
         if (result == SET_OUT_OF_MEMORY)
@@ -168,7 +172,7 @@ int sortByID(SetElement ElemA, SetElement ElemB)
 /* return 1 if the element matches the key, 0 if not */
 int matchByID(SetElement Elem, KeyForSetElement key)
 {
-    return (((Worker)Elem)->id == *(unsigned long*)key);
+    return (((Worker)Elem)->id == *(int*)key);
 }
 
 /* return 1 if the element matches the key, 0 if not */
@@ -182,8 +186,7 @@ int matchByShift(SetElement Elem, KeyForSetElement key)
 {
     return (
         setIsIn(
-            ((Worker)Elem)->shift_set, (Shift)key
-            )
+            ((Worker)Elem)->shift_set, (Shift)key)
             == SET_ELEMENT_EXISTS);
 }
 
@@ -313,7 +316,6 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
     Shift new_shift = malloc(sizeof(Shift_t));
     if (new_shift == NULL)
         return HRM_OUT_OF_MEMORY;
-
     if (hrm == NULL)
     {
         freeShift(new_shift);
@@ -381,13 +383,14 @@ HrmResult HrMgmtRemoveShiftFromWorker(HrMgmt hrm, int id, HrmShiftDay day, HrmSh
 
     SetElement worker_element = NULL;
     SetResult result = setFind(set, &worker_element, &id, matchByID);
-    if(result == SET_ELEMENT_DOES_NOT_EXIST)
+    if(result != SET_SUCCESS)
         return HRM_WORKER_DOES_NOT_EXIST;
 
     Set shift_set = ((Worker)worker_element)->shift_set;
+
     SetElement shift_element = NULL;
     result = setFind(shift_set, &shift_element, &day, matchByDay);
-    if(result == SET_ELEMENT_DOES_NOT_EXIST || ((Shift)shift_element)->type != type)
+    if(result != SET_SUCCESS || ((Shift)shift_element)->type != type)
         return HRM_SHIFT_DOES_NOT_EXIST;
 
     setRemove(shift_set, shift_element);
@@ -410,7 +413,7 @@ HrmResult HrMgmtTransferShift(HrMgmt hrm, int fromId, int toId, HrmShiftDay day,
     SetElement worker_to_element = NULL;
     SetResult result_from = setFind(set, &worker_from_element, &fromId, matchByID);
     SetResult result_to = setFind(set, &worker_to_element, &toId, matchByID);
-    if(result_from == SET_ELEMENT_DOES_NOT_EXIST || result_to == SET_ELEMENT_DOES_NOT_EXIST)
+    if(result_from != SET_SUCCESS || result_to != SET_SUCCESS)
         return HRM_WORKER_DOES_NOT_EXIST;
 
     Worker worker_from = (Worker)worker_from_element;
@@ -421,14 +424,14 @@ HrmResult HrMgmtTransferShift(HrMgmt hrm, int fromId, int toId, HrmShiftDay day,
 
     SetElement shift_element = NULL;
     SetResult result = setFind(shift_set_from, &shift_element, &day, matchByDay);
-    if (shift_set_from == NULL || result == SET_ELEMENT_DOES_NOT_EXIST || ((Shift)shift_element)->type != type)
+    if (shift_set_from == NULL || result != SET_SUCCESS || ((Shift)shift_element)->type != type)
         return HRM_SHIFT_DOES_NOT_EXIST;
 
     if(setGetSize(shift_set_to)+1 > worker_to->num_available_shifts)
         return HRM_SHIFTS_OVERFLLOW;
 
     result = setAdd(shift_set_to, shift_element);
-    if(result == SET_ELEMENT_DOES_NOT_EXIST)
+    if(result != SET_SUCCESS)
     {
         return HRM_SHIFT_ALREADY_EXISTS;
     }
@@ -479,19 +482,17 @@ HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
         return HRM_INVALID_WORKER_ID;
     Set set = hrm->worker_set;
     int worker_set_size = setGetSize(set);
-    if(worker_set_size <= 0)
+    if(set == NULL || worker_set_size <= 0)
         return HRM_NO_SHIFTS;
 
     SetElement worker_element = NULL;
     SetResult result = setFind(set, &worker_element,&id, matchByID);
     if(result != SET_SUCCESS)
         return HRM_NO_SHIFTS;
+    printWorker(output, (Worker)worker_element);
 
-    printWorker(output, worker_element);
 
-    Set shift_set = ((Worker)worker_element)->shift_set;
-
-    setPrint(shift_set,output,setGetSize(shift_set));
+    setPrint(((Worker)worker_element)->shift_set,output,setGetSize(((Worker)worker_element)->shift_set));
     return HRM_SUCCESS;
 }
 
@@ -516,7 +517,7 @@ HrmResult HrMgmtReportWorkersInShift(HrMgmt hrm, HrmShiftDay day, HrmShiftType t
 
     Set workers_in_shift = NULL;
     SetResult result = setFilter(set, &workers_in_shift, shift, matchByShift);
-    if(result != SET_SUCCESS)
+    if(result != SET_SUCCESS || setGetSize(workers_in_shift) <= 0)
     {
         freeShift(shift);
         setDestroy(workers_in_shift);

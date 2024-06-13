@@ -8,21 +8,22 @@ int main() {
     assert(hrm != NULL);
 
     // Add a worker
-    assert(HrMgmtAddWorker(hrm, "John", 1, MANAGER, 20.0, 5) == HRM_SUCCESS);
+    assert(HrMgmtAddWorker(hrm, "John", 1, MANAGER, 20.0, 6) == HRM_SUCCESS);
 
     // Try adding a worker with duplicate ID
     assert(HrMgmtAddWorker(hrm, "Alice", 1, CHEF, 15.0, 3) == HRM_WORKER_ALREADY_EXISTS);
+    assert(HrMgmtAddWorker(hrm, "Alice", 2, CHEF, 15.0, 3) == HRM_SUCCESS);
 
     // Add shifts to a worker until their available shifts are full
     //TODO: FIX THIS
-    for (int i = 0; i < 5; i++) {
-        assert(HrMgmtAddShiftToWorker(hrm, 1, MONDAY, MORNING) == HRM_SUCCESS);
+    for (int i = 0; i < 6; i++) {
+        assert(HrMgmtAddShiftToWorker(hrm, 1, i, MORNING) == HRM_SUCCESS);
     }
     // Try adding one more shift
     assert(HrMgmtAddShiftToWorker(hrm, 1, TUESDAY, AFTERNOON) == HRM_SHIFTS_OVERFLLOW);
 
     // Try removing a shift from a worker with no shifts
-    assert(HrMgmtRemoveShiftFromWorker(hrm, 1, MONDAY, MORNING) == HRM_NO_SHIFTS);
+    assert(HrMgmtRemoveShiftFromWorker(hrm, 2, MONDAY, MORNING) == HRM_SHIFT_DOES_NOT_EXIST);
 
     // Try transferring a shift to a worker with full schedule
     assert(HrMgmtTransferShift(hrm, 1, 1, TUESDAY, MORNING) == HRM_SHIFTS_OVERFLLOW);
