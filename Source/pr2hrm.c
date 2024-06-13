@@ -65,10 +65,7 @@ void freeShift(SetElement Elem)
 
 void printShift(FILE* out, SetElement Elem)
 {
-    //This doesn't work, waiting for an answer from David
-    //prog2_report_shift(out, SUNDAY, MORNING);
-    if(((Shift)Elem)->day == SUNDAY) return;
-    prog2_report_shift(out, ((Shift)Elem)->day, ((Shift)Elem)->type);
+   prog2_report_shift(out, ((Shift)Elem)->day, ((Shift)Elem)->type);
 }
 
 

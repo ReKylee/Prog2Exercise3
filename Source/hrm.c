@@ -15,12 +15,12 @@ int main() {
     assert(HrMgmtAddWorker(hrm, "Alice", 2, CHEF, 15.0, 3) == HRM_SUCCESS);
 
     // Add shifts to a worker until their available shifts are full
-    //TODO: FIX THIS
     for (int i = 0; i < 6; i++) {
         assert(HrMgmtAddShiftToWorker(hrm, 1, i, MORNING) == HRM_SUCCESS);
     }
     // Try adding one more shift
     assert(HrMgmtAddShiftToWorker(hrm, 1, TUESDAY, AFTERNOON) == HRM_SHIFTS_OVERFLLOW);
+    assert(HrMgmtAddShiftToWorker(hrm, 2, TUESDAY, AFTERNOON) == HRM_SUCCESS);
 
     // Try removing a shift from a worker with no shifts
     assert(HrMgmtRemoveShiftFromWorker(hrm, 2, MONDAY, MORNING) == HRM_SHIFT_DOES_NOT_EXIST);
@@ -33,22 +33,22 @@ int main() {
     assert(HrMgmtReportWorkers(hrm, MANAGER, output) == HRM_SUCCESS);
     fclose(output);
 
-    output = fopen("output.txt", "w");
+    output = fopen("output.txt", "a");
     assert(HrMgmtReportWorkers(hrm, CHEF, output) == HRM_SUCCESS);
     fclose(output);
 
     // Report workers for all roles combined
-    output = fopen("output.txt", "w");
+    output = fopen("output.txt", "a");
     assert(HrMgmtReportWorkers(hrm, ALL_ROLES, output) == HRM_SUCCESS);
     fclose(output);
 
     // Report shifts for each worker individually
-    output = fopen("output.txt", "w");
+    output = fopen("output.txt", "a");
     assert(HrMgmtReportShiftsOfWorker(hrm, 1, output) == HRM_SUCCESS);
     fclose(output);
 
     // Try reporting workers for a non-existent shift
-    output = fopen("output.txt", "w");
+    output = fopen("output.txt", "a");
     assert(HrMgmtReportWorkersInShift(hrm, SATURDAY, MORNING, output) == HRM_NO_WORKERS);
     fclose(output);
 
