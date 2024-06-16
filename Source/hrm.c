@@ -30,25 +30,30 @@ int main() {
 
     // Report workers for each role individually
     FILE *output = fopen("output.txt", "w");
+    fprintf(output, "Report Managers:\n");
     assert(HrMgmtReportWorkers(hrm, MANAGER, output) == HRM_SUCCESS);
     fclose(output);
 
     output = fopen("output.txt", "a");
+    fprintf(output, "Report Chefs:\n");
     assert(HrMgmtReportWorkers(hrm, CHEF, output) == HRM_SUCCESS);
     fclose(output);
 
     // Report workers for all roles combined
     output = fopen("output.txt", "a");
+    fprintf(output, "Report All Workers:\n");
     assert(HrMgmtReportWorkers(hrm, ALL_ROLES, output) == HRM_SUCCESS);
     fclose(output);
 
     // Report shifts for each worker individually
     output = fopen("output.txt", "a");
+    fprintf(output, "Shifts of Worker:\n");
     assert(HrMgmtReportShiftsOfWorker(hrm, 1, output) == HRM_SUCCESS);
     fclose(output);
 
     // Try reporting workers for a non-existent shift
     output = fopen("output.txt", "a");
+    fprintf(output, "No Workers In Shift\n");
     assert(HrMgmtReportWorkersInShift(hrm, SATURDAY, MORNING, output) == HRM_NO_WORKERS);
     fclose(output);
 
