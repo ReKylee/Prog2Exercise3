@@ -439,6 +439,7 @@ HrmResult HrMgmtTransferShift(HrMgmt hrm, int fromId, int toId, HrmShiftDay day,
     {
         return HRM_SHIFT_ALREADY_EXISTS;
     }
+
     setRemove(shift_set_from, shift_element);
     return HRM_SUCCESS;
 
