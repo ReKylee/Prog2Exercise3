@@ -2,7 +2,7 @@
 #include <assert.h>
 #include "pr2hrm.h"
 
-int main() {
+int main2() {
     // Create HR management system
     HrMgmt hrm = HrMgmtCreate();
     assert(hrm != NULL);

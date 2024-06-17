@@ -110,11 +110,19 @@ int matchByType(SetElement Elem /*Shift*/, KeyForSetElement key /*Shift Type*/)
  *                                                      */
 void freeWorker(SetElement Elem /*Worker*/)
 {
+    if (Elem == NULL)
+        return;
+
     Worker worker = (Worker)Elem;
-    setDestroy(worker->shift_set);
-    free(worker->name);
+    if (worker->shift_set != NULL) {
+        setDestroy(worker->shift_set);
+    }
+    if (worker->name != NULL) {
+        free(worker->name);
+    }
     free(worker);
 }
+
 int filterSetCopyFunc(SetElement Elem, KeyForSetElement key)
 {
     return 1;
@@ -239,34 +247,25 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
                           int num_available_shifts)
 {
 
-    /* Get the worker and list*/
-    Worker new_worker = malloc(sizeof(Worker_t));
-    if (new_worker == NULL)
-        return HRM_OUT_OF_MEMORY;
-
-    /* THE ERROR GATES!! */
+    // Check for null pointers and invalid state
     if (hrm == NULL || name == NULL || hrm->worker_set == NULL)
-    {
-        freeWorker(new_worker);
         return HRM_NULL_ARGUMENT;
-    }
-    Set set = hrm->worker_set;
 
     if (id <= 0)
-    {
-        freeWorker(new_worker);
         return HRM_INVALID_WORKER_ID;
-    }
+
     if (wage <= 0)
-    {
-        freeWorker(new_worker);
         return HRM_INVALID_WAGE;
-    }
+
     if (num_available_shifts <= 0)
-    {
-        freeWorker(new_worker);
         return HRM_INVALID_NUM_OF_SHIFTS;
+
+    // Allocate memory for new worker
+    Worker new_worker = malloc(sizeof(Worker_t));
+    if (new_worker == NULL) {
+        return HRM_OUT_OF_MEMORY;
     }
+    Set set = hrm->worker_set;
 
     new_worker->id = id;
     new_worker->name = strdup(name);
@@ -351,7 +350,7 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
     /* Find worker by ID */
     SetElement worker_element = NULL;
     SetResult result = setFind(set, &worker_element, &id, matchByID);
-    if (result != SET_SUCCESS)
+    if (result != SET_SUCCESS || worker_element == NULL)
     {
         freeShift(new_shift);
         return HRM_WORKER_DOES_NOT_EXIST;
@@ -369,12 +368,18 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
     new_shift->type = type;
     /* Add shift to set and check for errors */
     result = setAdd(this_worker->shift_set, new_shift);
+
     if(result != SET_SUCCESS)
+    {
+        fprintf(stderr, "%d\t", id);
         freeShift(new_shift);
+    }
     if(result == SET_OUT_OF_MEMORY)
         return HRM_OUT_OF_MEMORY;
     if(result == SET_ELEMENT_EXISTS)
         return HRM_SHIFT_ALREADY_EXISTS;
+
+
     /* Set clones the data so we can free the new shift */
     freeShift(new_shift);
     return HRM_SUCCESS;
@@ -515,7 +520,7 @@ HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
 
     SetElement worker_element = NULL;
     SetResult result = setFind(set, &worker_element,&id, matchByID);
-    if(result != SET_SUCCESS)
+    if(result != SET_SUCCESS || worker_element == NULL)
         return HRM_NO_SHIFTS;
 
     printWorker(output, (Worker)worker_element);
