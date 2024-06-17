@@ -55,6 +55,9 @@ static const TestFunction tests[] = {
 
 int main()
 {
+
+
+
     for (int i = 0; i < sizeof(tests) / sizeof(TestFunction); i++)
     {
         tests[i]();
