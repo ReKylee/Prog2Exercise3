@@ -1,33 +1,19 @@
-BIN = hrm.exe
+FLAGS=-Wall -Werror
+TOP=./Source
+CC=gcc
+TESTS=
 
-BUILD_DIR = ./build
-SOURCE_DIR = ./Source
+all: test1 test2
 
-CC = gcc
-
-CC_FLAGS = -Wall -Werror
-LNK_FLAGS = -L. -lprog2
-
-#All .c files
-SOURCE =  $(wildcard $(SOURCE_DIR)/*.c)
-# All .o files go to build dir.
-OBJS := $(SOURCE:%=$(BUILD_DIR)/%.o)
-
-# Gcc/Clang will create these .d files containing dependencies.
-DEP = $(OBJ:%.o=%.d)
-
-#Executable target
-$(BIN): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LNK_FLAGS)
-
-# Include all .d files
--include $(DEP)
-
-$(BUILD_DIR)/%.c.o: %.c
-	mkdir -p $(dir $@)
-	$(CC) -MMD $(CFLAGS) -c $< -o $@
-
+test1: main.c $(TOP)/*.c
+	$(CC) $(FLAGS) -DTEST1 -I$(TOP) main.c $(TOP)/*.c -L$(TOP) -lprog2 -o $@
+	./$@ > ./$@.out 2> ./$@.err
+.PHONY: test1
+ 
+test2: main.c $(TOP)/*.c
+	$(CC) $(FLAGS) -DTEST2 -I$(TOP) main.c $(TOP)/*.c -L$(TOP) -lprog2 -o $@
+	./$@ > ./$@.out 2> ./$@.err 
+.PHONY: test2
 
 clean:
-	-rm -r $(BUILD_DIR)
-	-rm $(BIN)
+	rm -f *.o test1 test2
