@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "../Source/pr2hrm.h"
-#include "../Source/pr2ex3.h"
+#include "pr2hrm.h"
+#include "pr2ex3.h"
 
 #define HANDLE_RESULT(cmd) \
     do { \
@@ -55,9 +55,6 @@ static const TestFunction tests[] = {
 
 int main()
 {
-
-
-
     for (int i = 0; i < sizeof(tests) / sizeof(TestFunction); i++)
     {
         tests[i]();
@@ -326,8 +323,8 @@ void test_1()
     HANDLE_RESULT(HrMgmtRemoveWorker(hrm, 5693710));
     HANDLE_RESULT(HrMgmtRemoveWorker(hrm, 786540));
     HANDLE_RESULT(HrMgmtRemoveWorker(hrm, 6904692));
-    HANDLE_RESULT(HrMgmtReportWorkers(hrm, CLEANER , stdout)); // Nothing yet
-    HANDLE_RESULT(HrMgmtReportWorkersInShift(hrm, SUNDAY, EVENING, stdout)); // Chef
+    HANDLE_RESULT(HrMgmtReportWorkers(hrm, CLEANER , stdout));
+    HANDLE_RESULT(HrMgmtReportWorkersInShift(hrm, SUNDAY, EVENING, stdout));
     HANDLE_RESULT(HrMgmtAddWorker(hrm, "Aiden Henderson", 6904692, BARTENDER, 78.410004, 4));
     HANDLE_RESULT(HrMgmtAddWorker(hrm, "eeee Martinez", 786540, CLEANER, 45.730000, 7));
     HANDLE_RESULT(HrMgmtAddWorker(hrm, "Nina Henderson", 5693710, CLEANER, 75.870003, 3));

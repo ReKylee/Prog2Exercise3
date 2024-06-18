@@ -510,7 +510,7 @@ HrmResult HrMgmtTransferShift(HrMgmt hrm, int fromId, int toId, HrmShiftDay day,
 
 HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
 {
-    fprintf(stdout, "Workers of Role: %d\n",role);
+    //fprintf(stdout, "Workers of Role: %d\n",role);
 
     /* THE ERROR GATES!! */
     if (hrm == NULL || output == NULL)
@@ -551,7 +551,7 @@ HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
 
 HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
 {
-    //fprintf(stdout, "Shifts of Worker: %d\n",id);
+    ////fprintf(stdout, "Shifts of Worker: %d\n",id);
     /* THE ERROR GATES!! */
     if(hrm == NULL)
         return HRM_NULL_ARGUMENT;
@@ -579,7 +579,7 @@ HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
 
 HrmResult HrMgmtReportWorkersInShift(HrMgmt hrm, HrmShiftDay day, HrmShiftType type, FILE* output)
 {
-    ////fprintf(stdout, "Workers in Shift: %d %d\n", day, type);
+    //////fprintf(stdout, "Workers in Shift: %d %d\n", day, type);
     /* THE ERROR GATES!! */
     if(hrm == NULL)
         return HRM_NULL_ARGUMENT;
