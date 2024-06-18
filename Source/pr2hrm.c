@@ -367,6 +367,7 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
                           HrmWorkerRole role, float wage,
                           int numOfShifts)
 {
+    /* THE ERROR GATES!! */
     if (name == NULL || hrm == NULL || hrm->worker_set == NULL)
         return HRM_NULL_ARGUMENT;
 
@@ -403,6 +404,7 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
 
 HrmResult HrMgmtRemoveWorker(HrMgmt hrm, int id)
 {
+    /* THE ERROR GATES!! */
     if (hrm == NULL || hrm->worker_set == NULL)
         return HRM_NULL_ARGUMENT;
 
