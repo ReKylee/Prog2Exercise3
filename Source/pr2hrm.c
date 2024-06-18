@@ -11,44 +11,52 @@
     ((newError) < (currentError)) ? (newError) : (currentError)
 
 /* ******************************************************************************************************* */
-/* Structs Definitions					*
- *  HrMgmt_s -							*
- *		LinkedList: A List of Workers	*
- *	Shift_s -                           *
- *	    day: HrmShiftDay                *
- *	    type: HrmShiftType              *
- *	Worker_s -							*
- *		char*: name						*
- *		int: ID							*
- *		HrmWorkerRole: Role				*
- *		float: Wage						*
- *		int: Number of Shifts			*
- *		                                */
 
+/**
+ * HrMgmt struct
+ *  Hold a set of workers
+ */
 typedef struct HrMgmt_s
 {
     Set worker_set;
 } HrMgmt_t, *HrMgmt;
 
 
+/**
+ * Shift struct
+ *  Holds a shift day and a shirt type
+ */
 typedef struct Shift_s
 {
     HrmShiftDay day;
     HrmShiftType type;
 } Shift_t, *Shift;
 
+
+/**
+ * Worker struct
+ *  Holds a name, an id, a worker role, a wage, a shift set and the number of available shifts
+ */
 typedef struct Worker_s
 {
     char* name;
     unsigned int id;
     HrmWorkerRole role;
-    double wage;
+    float wage;
     Set shift_set;
     int num_available_shifts;
 } Worker_t, *Worker;
 
 /* ******************************************************************************************************* */
 /*      Error helper function    */
+
+/**
+ * setResultToHrmResult
+ * @param set_result The set result to convert
+ * @param element_exists_result what should be returned if set element exists
+ * @param element_not_exists_result what should be returned if set element does not exist
+ * @return returns the matching hrm result
+ */
 HrmResult setResultToHrmResult(SetResult set_result, HrmResult element_exists_result,
                                HrmResult element_not_exists_result)
 {
@@ -68,15 +76,13 @@ HrmResult setResultToHrmResult(SetResult set_result, HrmResult element_exists_re
 }
 
 /* ******************************************************************************************************* */
-/* Required Set functions for an element of type Shift	*
- * functions here -                                     *
- *      copyShift                                       *
- *      freeShift                                       *
- *      printShift                                      *
- *      sortByDay   - for cmpSetElemFunc                *
- *      matchByDay  - for matchSetElemFunc              *
- *      matchByType - for matchSetElemFunc              *
- *                                                      */
+/* Required Set functions for an element of type Shift	*/
+
+/**
+ * 
+ * @param Elem Shift element to copy
+ * @return a pointer to a duplicate of the Shift
+ */
 SetElement copyShift(SetElement Elem /*Shift*/)
 {
     Shift this_shift = (Shift)Elem;
@@ -100,8 +106,12 @@ void printShift(FILE* out, SetElement Elem /*Shift*/)
 }
 
 
-/*	return -1 if first element should be placed							*
- *	ahead of 2nd , return 1 if vice versa , return 0 if we can't decide	*/
+/**
+ * 
+ * @param ElemA First Shift to compare
+ * @param ElemB Second Shift to compare
+ * @return -1 if first ahead of second, 1 if vice versa, 0 if they're the same
+ */
 int sortByDayAndThenType(SetElement ElemA /*Shift*/, SetElement ElemB /*Shift*/)
 {
     HrmShiftDay dayA = ((Shift)ElemA)->day;
@@ -114,24 +124,49 @@ int sortByDayAndThenType(SetElement ElemA /*Shift*/, SetElement ElemB /*Shift*/)
     return (compare_days == 0) ? compare_types : compare_days;
 }
 
-/* return 1 if the element matches the key, 0 if not */
+/**
+ *
+ * @param Elem Shift to compare
+ * @param key HrmShiftDay to compare against
+ * @return 1 if matches, 0 if not
+ */
 int matchByDay(SetElement Elem /*Shift*/, KeyForSetElement key /*Shift Day*/)
 {
     return (((Shift)Elem)->day == *(HrmShiftDay*)key);
 }
 
-/* return 1 if the element matches the key, 0 if not */
+/**
+ *
+ * @param Elem Shift to compare
+ * @param key HrmShiftType to compare against
+ * @return 1 if matches, 0 if not
+ */
 int matchByType(SetElement Elem /*Shift*/, KeyForSetElement key /*Shift Type*/)
 {
     return (((Shift)Elem)->type == *(HrmShiftType*)key);
 }
 
+
+/**
+ *
+ * @param Elem Shift to compare
+ * @param key An array of KeyForSetElement [&day, &type] to compare against
+ * @return 1 if matches, 0 if not
+ */
 int matchByDayAndType(SetElement Elem /*Shift*/, KeyForSetElement key /*Shift Day*/)
 {
     KeyForSetElement* keys = (KeyForSetElement*)key;
     return matchByDay(Elem, keys[0]) && matchByType(Elem, keys[1]);
 }
 
+/**
+ * 
+ * @param day HrmShiftDay to find
+ * @param type HrmShiftType to find
+ * @param shift_set Shift Set to search
+ * @param shift_element The found shift element
+ * @return the result of setFind matched to a HrmResult
+ */
 HrmResult findShift(HrmShiftDay day, HrmShiftType type, Set shift_set, SetElement* shift_element)
 {
     KeyForSetElement keys[] = {&day, &type};
@@ -141,18 +176,7 @@ HrmResult findShift(HrmShiftDay day, HrmShiftType type, Set shift_set, SetElemen
 
 /* ******************************************************************************************************* */
 
-/* Required Set functions for an element of type Worker	*
- * functions here -                                     *
- *      initiateNewWorker
- *      freeWorker                                      *
- *      copyWorker                                      *
- *      printWorker                                     *
- *      sortByID     -  for cmpSetElemFunc              *
- *      matchByID    -  for matchSetElemFunc            *
- *      matchByRole  -  for matchSetElemFunc            *
- *      matchByShift -  for matchSetElemFunc            *
- *                                                      */
-
+/* Required Set functions for an element of type Worker	*/
 
 void freeWorker(SetElement Elem /*Worker*/)
 {
@@ -166,6 +190,18 @@ int filterSetCopyFunc(SetElement Elem, KeyForSetElement key)
     return 1;
 }
 
+/**
+ *
+ * @param name Name
+ * @param id ID
+ * @param role HrmWorkerRole
+ * @param wage Wage
+ * @param numOfShifts Number of available shifts
+ * @param new_worker A pointer to where the new worker will be stored
+ * @param shift_set_to_copy If supplied, will copy the set to the new worker's shift set.
+ *                          set to NULL to create an empty one.
+ * @return The result of adding a new worker.
+ */
 HrmResult initiateNewWorker(const char* name, unsigned int id, HrmWorkerRole role, float wage, int numOfShifts,
                             const Worker* new_worker, const Set* shift_set_to_copy)
 {
@@ -191,6 +227,12 @@ HrmResult initiateNewWorker(const char* name, unsigned int id, HrmWorkerRole rol
     return setResultToHrmResult(result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
 }
 
+
+/**
+ * 
+ * @param Elem Worker element to copy
+ * @return a pointer to a duplicate of the Worker
+ */
 SetElement copyWorker(SetElement Elem /*Worker*/)
 {
     Worker new_worker = malloc(sizeof(Worker_t));
@@ -220,8 +262,12 @@ void printWorker(FILE* out, SetElement Elem /*Worker*/)
                         worker->wage, worker->role, total_payment);
 }
 
-/*	return -1 if first element should be placed							*
- *	ahead of 2nd , return 1 if vice versa , return 0 if we can't decide	*/
+/**
+ *
+ * @param ElemA First Worker to compare
+ * @param ElemB Second Worker to compare
+ * @return -1 if first ahead of second, 1 if vice versa, 0 if they're the same
+ */
 int sortByID(SetElement ElemA /*Worker*/, SetElement ElemB /*Worker*/)
 {
     unsigned int idA = ((Worker)ElemA)->id;
@@ -230,19 +276,34 @@ int sortByID(SetElement ElemA /*Worker*/, SetElement ElemB /*Worker*/)
     return (idA > idB) - (idA < idB);
 }
 
-/* return 1 if the element matches the key, 0 if not */
+/**
+ *
+ * @param Elem Worker to compare
+ * @param key unsigned int ID to compare against
+ * @return 1 if matches, 0 if not
+ */
 int matchByID(SetElement Elem /*Worker*/, KeyForSetElement key /*Worker ID*/)
 {
     return (((Worker)Elem)->id == *(unsigned int*)key);
 }
 
-/* return 1 if the element matches the key, 0 if not */
+/**
+ *
+ * @param Elem Worker to compare
+ * @param key HrmWorkerRole to compare against
+ * @return 1 if matches, 0 if not
+ */
 int matchByRole(SetElement Elem /*Worker*/, KeyForSetElement key /*Worker Role*/)
 {
     return (((Worker)Elem)->role == *(HrmWorkerRole*)key);
 }
 
-/* return 1 if the element matches the key, 0 if not */
+/**
+ *
+ * @param Elem Worker to compare
+ * @param key pointer to a Shift
+ * @return 1 if matches, 0 if not
+ */
 int matchByShift(SetElement Elem /*Worker*/, KeyForSetElement key /*Shift*/)
 {
     return (
@@ -252,6 +313,14 @@ int matchByShift(SetElement Elem /*Worker*/, KeyForSetElement key /*Shift*/)
 }
 
 
+/**
+ *
+ * @param set Set to filter
+ * @param day HrmShiftDay to find
+ * @param type HrmShiftType to find
+ * @param workers_in_shift Pointer to a new set to store the workers in
+ * @return The result of filtering for workers in this shift
+ */
 HrmResult filterWorkersByShift(const Set* set, HrmShiftDay day, HrmShiftType type, /*OUT*/ Set* workers_in_shift)
 {
     if (set == NULL || workers_in_shift == NULL)
