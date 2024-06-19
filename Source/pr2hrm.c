@@ -10,6 +10,12 @@
 #define EVALUATE_ERROR(newError, currentError) \
     ((newError) < (currentError)) ? (newError) : (currentError)
 
+#define EXPECT_GT(i, e, ...) \
+if (i <= e) { __VA_ARGS__ }
+
+#define EXPECT_NOT_NULL(i, ...) \
+if (i == NULL) { __VA_ARGS__ }
+
 /* ******************************************************************************************************* */
 
 /**
@@ -587,6 +593,8 @@ HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
         return setResultToHrmResult(result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
     }
 
+    if(setGetSize(filteredSet) <= 0)
+        return HRM_NO_WORKERS;
     setPrintSorted(filteredSet, output, setGetSize(filteredSet), sortByID);
     setDestroy(filteredSet);
     return HRM_SUCCESS;
