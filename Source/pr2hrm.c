@@ -6,15 +6,16 @@
 #include <string.h>
 
 
-// Macro to evaluate error based on comparison
+/* MACROS: ERROR  */
 #define EVALUATE_ERROR(newError, currentError) \
     ((newError) < (currentError)) ? (newError) : (currentError)
 
+/* MACROS: EXPECT  */
 #define EXPECT_GT(i, e, ...) \
-if (i <= e) { __VA_ARGS__ }
+    if (i <= e) { __VA_ARGS__ }
 
 #define EXPECT_NOT_NULL(i, ...) \
-if (i == NULL) { __VA_ARGS__ }
+    if (i == NULL) { __VA_ARGS__ }
 
 /* ******************************************************************************************************* */
 
@@ -91,13 +92,13 @@ HrmResult setResultToHrmResult(SetResult set_result, HrmResult element_exists_re
  */
 SetElement copyShift(SetElement Elem /*Shift*/)
 {
-    Shift this_shift = (Shift)Elem;
-    Shift new_shift = malloc(sizeof(Shift_t));
-    if (new_shift != NULL)
-    {
-        new_shift->day = this_shift->day;
-        new_shift->type = this_shift->type;
-    }
+    Shift this_shift    = (Shift)Elem;
+    Shift new_shift     = malloc(sizeof(Shift_t));
+
+    EXPECT_NOT_NULL(new_shift, return NULL; )
+
+    new_shift->day  = this_shift->day;
+    new_shift->type = this_shift->type;
     return (SetElement)new_shift;
 }
 
@@ -120,13 +121,13 @@ void printShift(FILE* out, SetElement Elem /*Shift*/)
  */
 int sortByDayAndThenType(SetElement ElemA /*Shift*/, SetElement ElemB /*Shift*/)
 {
-    HrmShiftDay dayA = ((Shift)ElemA)->day;
-    HrmShiftDay dayB = ((Shift)ElemB)->day;
-    HrmShiftType typeA = ((Shift)ElemA)->type;
-    HrmShiftType typeB = ((Shift)ElemB)->type;
+    HrmShiftDay dayA    = ((Shift)ElemA)->day;
+    HrmShiftDay dayB    = ((Shift)ElemB)->day;
+    HrmShiftType typeA  = ((Shift)ElemA)->type;
+    HrmShiftType typeB  = ((Shift)ElemB)->type;
 
-    int compare_days = (dayA > dayB) - (dayA < dayB);
-    int compare_types = (typeA > typeB) - (typeA < typeB);
+    int compare_days    = (dayA > dayB) - (dayA < dayB);
+    int compare_types   = (typeA > typeB) - (typeA < typeB);
     return (compare_days == 0) ? compare_types : compare_days;
 }
 
@@ -176,7 +177,7 @@ int matchByDayAndType(SetElement Elem /*Shift*/, KeyForSetElement key /*Shift Da
 HrmResult findShift(HrmShiftDay day, HrmShiftType type, Set shift_set, SetElement* shift_element)
 {
     KeyForSetElement keys[] = {&day, &type};
-    SetResult result = setFind(shift_set, (shift_element), &keys, matchByDayAndType);
+    SetResult result        = setFind(shift_set, (shift_element), &keys, matchByDayAndType);
     return setResultToHrmResult(result, HRM_SHIFT_ALREADY_EXISTS, HRM_SHIFT_DOES_NOT_EXIST);
 }
 
@@ -212,23 +213,23 @@ HrmResult initiateNewWorker(const char* name, unsigned int id, HrmWorkerRole rol
                             const Worker* new_worker, const Set* shift_set_to_copy)
 {
     SetResult result;
-    (*new_worker)->id = id;
-    (*new_worker)->name = strdup(name);
-    if ((*new_worker)->name == NULL)
-    {
-        /* Worker Hasn't been assigned memory for name; free it by itself*/
-        return HRM_OUT_OF_MEMORY;
-    }
-    (*new_worker)->role = role;
-    (*new_worker)->wage = wage;
+    (*new_worker)->id                   = id;
+    (*new_worker)->name                 = strdup(name);
+
+    EXPECT_NOT_NULL((*new_worker)->name, return HRM_OUT_OF_MEMORY;)
+
+    (*new_worker)->role                 = role;
+    (*new_worker)->wage                 = wage;
     (*new_worker)->num_available_shifts = numOfShifts;
     if (shift_set_to_copy == NULL)
     {
-        result = setCreate(&(*new_worker)->shift_set, sortByDayAndThenType, copyShift, freeShift, printShift);
+        result = setCreate(&(*new_worker)->shift_set,
+            sortByDayAndThenType, copyShift, freeShift, printShift);
     }
     else
     {
-        result = setFilter(*shift_set_to_copy, &(*new_worker)->shift_set, 0, filterSetCopyFunc);
+        result = setFilter(*shift_set_to_copy,
+            &(*new_worker)->shift_set, 0, filterSetCopyFunc);
     }
     return setResultToHrmResult(result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
 }
@@ -241,28 +242,27 @@ HrmResult initiateNewWorker(const char* name, unsigned int id, HrmWorkerRole rol
  */
 SetElement copyWorker(SetElement Elem /*Worker*/)
 {
-    Worker new_worker = malloc(sizeof(Worker_t));
-    if (new_worker != NULL)
-    {
-        Worker this_worker = (Worker)Elem;
-        HrmResult result = initiateNewWorker(
-            this_worker->name,
-            this_worker->id,
-            this_worker->role,
-            this_worker->wage,
-            this_worker->num_available_shifts,
-            &new_worker,
-            &this_worker->shift_set);
-        if (result != HRM_SUCCESS)
-            freeWorker(new_worker);
-    }
+    Worker new_worker   = malloc(sizeof(Worker_t));
+    EXPECT_NOT_NULL(new_worker, return NULL; )
+
+    Worker this_worker  = (Worker)Elem;
+    HrmResult result    = initiateNewWorker(
+                            this_worker->name,
+                            this_worker->id,
+                            this_worker->role,
+                            this_worker->wage,
+                            this_worker->num_available_shifts,
+                            &new_worker,
+                            &this_worker->shift_set);
+    if (result != HRM_SUCCESS)
+        freeWorker(new_worker);
     return new_worker;
 }
 
 void printWorker(FILE* out, SetElement Elem /*Worker*/)
 {
-    Worker worker = Elem;
-    Set shifts = worker->shift_set;
+    Worker worker       = Elem;
+    Set shifts          = worker->shift_set;
     float total_payment = setGetSize(shifts) * HOURS_PER_SHIFT * worker->wage;
     prog2_report_worker(out, worker->id, worker->name,
                         worker->wage, worker->role, total_payment);
@@ -329,18 +329,19 @@ int matchByShift(SetElement Elem /*Worker*/, KeyForSetElement key /*Shift*/)
  */
 HrmResult filterWorkersByShift(const Set* set, HrmShiftDay day, HrmShiftType type, /*OUT*/ Set* workers_in_shift)
 {
-    if (set == NULL || workers_in_shift == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(set,                return HRM_NULL_ARGUMENT;)
+
+    EXPECT_NOT_NULL(workers_in_shift,   return HRM_NULL_ARGUMENT;)
 
     /* Create a Shift to be used for setIsIn*/
-    Shift shift = malloc(sizeof(Shift_t));
-    if (shift == NULL)
-        return HRM_OUT_OF_MEMORY;
+    Shift shift         = malloc(sizeof(Shift_t));
 
-    shift->day = day;
-    shift->type = type;
+    EXPECT_NOT_NULL(shift,              return HRM_OUT_OF_MEMORY;)
 
-    SetResult result = setFilter(*set, workers_in_shift, &shift, matchByShift);
+    shift->day          = day;
+    shift->type         = type;
+
+    SetResult result    = setFilter(*set, workers_in_shift, &shift, matchByShift);
     freeShift(shift);
     return setResultToHrmResult(result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
 }
@@ -348,16 +349,15 @@ HrmResult filterWorkersByShift(const Set* set, HrmShiftDay day, HrmShiftType typ
 /* ******************* HR Management Functions ******************* */
 HrMgmt HrMgmtCreate()
 {
-    HrMgmt hrMgmt = malloc(sizeof(HrMgmt_t));
-    if (hrMgmt != NULL)
-    {
-        SetResult result = setCreate(&(hrMgmt->worker_set), sortByID, copyWorker, freeWorker, printWorker);
+    HrMgmt hrMgmt       = malloc(sizeof(HrMgmt_t));
+    EXPECT_NOT_NULL(hrMgmt, return NULL; )
 
-        if (result != SET_SUCCESS)
-        {
-            free(hrMgmt);
-            return NULL;
-        }
+    SetResult result    = setCreate(&(hrMgmt->worker_set), sortByID, copyWorker, freeWorker, printWorker);
+
+    if (result != SET_SUCCESS)
+    {
+        free(hrMgmt);
+        return NULL;
     }
     return hrMgmt;
 }
@@ -374,25 +374,21 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
                           int numOfShifts)
 {
     /* THE ERROR GATES!! */
-    if (name == NULL || hrm == NULL || hrm->worker_set == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(name,               return HRM_NULL_ARGUMENT; )
+    EXPECT_NOT_NULL(hrm,                return HRM_NULL_ARGUMENT; )
+    EXPECT_NOT_NULL(hrm->worker_set,    return HRM_NULL_ARGUMENT; )
 
-    if (id <= 0)
-        return HRM_INVALID_WORKER_ID;
+    EXPECT_GT(id, 0,                    return HRM_INVALID_WORKER_ID; )
 
-    if (wage <= 0)
-        return HRM_INVALID_WAGE;
+    EXPECT_GT(wage, 0,                  return HRM_INVALID_WAGE; )
 
-    if (numOfShifts <= 0)
-        return HRM_INVALID_NUM_OF_SHIFTS;
+    EXPECT_GT(numOfShifts, 0,           return HRM_INVALID_NUM_OF_SHIFTS; )
 
-    Worker new_worker = malloc(sizeof(Worker_t));
-    if (new_worker == NULL)
-    {
-        return HRM_OUT_OF_MEMORY;
-    }
+    Worker new_worker   = malloc(sizeof(Worker_t));
 
-    Set set = hrm->worker_set;
+    EXPECT_NOT_NULL(new_worker,         return HRM_OUT_OF_MEMORY; )
+
+    Set set              = hrm->worker_set;
 
     HrmResult hrm_result = initiateNewWorker(name, id, role, wage, numOfShifts, &new_worker, NULL);
     if (hrm_result != HRM_SUCCESS)
@@ -403,6 +399,7 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
 
     /* Add our worker to the worker_set */
     SetResult set_result = setAdd(set, new_worker);
+
     /* Since Set just clones the data, we can free it */
     freeWorker(new_worker);
     return setResultToHrmResult(set_result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
@@ -411,15 +408,14 @@ HrmResult HrMgmtAddWorker(HrMgmt hrm,
 HrmResult HrMgmtRemoveWorker(HrMgmt hrm, int id)
 {
     /* THE ERROR GATES!! */
-    if (hrm == NULL || hrm->worker_set == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(hrm,                return HRM_NULL_ARGUMENT; )
+    EXPECT_NOT_NULL(hrm->worker_set,    return HRM_NULL_ARGUMENT; )
 
-    if (id <= 0)
-        return HRM_INVALID_WORKER_ID;
+    EXPECT_GT(id, 0,                    return HRM_INVALID_WORKER_ID; )
 
     /* Find the worker by ID and remove him */
-    SetElement worker_element = NULL;
-    SetResult result = setFind(hrm->worker_set, &worker_element, &id, matchByID);
+    SetElement worker_element   = NULL;
+    SetResult result            = setFind(hrm->worker_set, &worker_element, &id, matchByID);
     setRemove(hrm->worker_set, (Worker)worker_element);
     return setResultToHrmResult(result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
 }
@@ -429,41 +425,38 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
 {
     /* THE ERROR GATES!! */
     Shift new_shift = malloc(sizeof(Shift_t));
-    if (new_shift == NULL)
-        return HRM_OUT_OF_MEMORY;
+    EXPECT_NOT_NULL(new_shift, return HRM_OUT_OF_MEMORY; )
 
-    if (hrm == NULL)
-    {
+    EXPECT_NOT_NULL(hrm, {
         freeShift(new_shift);
         return HRM_NULL_ARGUMENT;
-    }
+    })
 
     Set set = hrm->worker_set;
-    if (setGetSize(set) <= 0)
-    {
+    EXPECT_GT(setGetSize(set), 0, {
         freeShift(new_shift);
         return HRM_WORKER_DOES_NOT_EXIST;
-    }
+    })
 
-    if (id <= 0)
-    {
+    EXPECT_GT(id, 0, {
         freeShift(new_shift);
         return HRM_INVALID_WORKER_ID;
-    }
+    })
+
 
     /* Find worker by ID */
-    SetElement worker_element = NULL;
-    SetResult result = setFind(set, &worker_element, &id, matchByID);
+    SetElement worker_element   = NULL;
+    SetResult result            = setFind(set, &worker_element, &id, matchByID);
     if (result != SET_SUCCESS)
     {
         freeShift(new_shift);
         return HRM_WORKER_DOES_NOT_EXIST;
     }
 
-    Worker this_worker = (Worker)worker_element;
+    Worker this_worker  = (Worker)worker_element;
 
-    new_shift->day = day;
-    new_shift->type = type;
+    new_shift->day      = day;
+    new_shift->type     = type;
 
 
     /* Add shift to set and check for errors */
@@ -471,6 +464,7 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
         setAdd(this_worker->shift_set, new_shift),
         HRM_SHIFT_ALREADY_EXISTS,
         HRM_WORKER_DOES_NOT_EXIST);
+
     /* If his shift count is greater than what he reported to be available */
     if (setGetSize(this_worker->shift_set) > this_worker->num_available_shifts)
     {
@@ -478,6 +472,7 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
         result_add_or_overflow = HRM_SHIFTS_OVERFLLOW;
     }
     freeShift(new_shift);
+
     /* if the result_add error is smaller(i.e higher priority), then return that instead of the overflow(in case we had one) */
     return result_add_or_overflow;
     ;
@@ -486,26 +481,24 @@ HrmResult HrMgmtAddShiftToWorker(HrMgmt hrm,
 HrmResult HrMgmtRemoveShiftFromWorker(HrMgmt hrm, int id, HrmShiftDay day, HrmShiftType type)
 {
     /* THE ERROR GATES!! */
-    if (hrm == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(hrm,            return HRM_NULL_ARGUMENT; )
 
     Set set = hrm->worker_set;
-    if (setGetSize(set) <= 0)
-        return HRM_WORKER_DOES_NOT_EXIST;
 
-    if (id <= 0)
-        return HRM_INVALID_WORKER_ID;
+    EXPECT_GT(setGetSize(set), 0,   return HRM_WORKER_DOES_NOT_EXIST;)
+
+    EXPECT_GT(id, 0,                return HRM_INVALID_WORKER_ID; )
 
     /* Find worker by ID */
-    SetElement worker_element = NULL;
-    SetResult result = setFind(set, &worker_element, &id, matchByID);
+    SetElement worker_element   = NULL;
+    SetResult result            = setFind(set, &worker_element, &id, matchByID);
     if (result != SET_SUCCESS)
         return HRM_WORKER_DOES_NOT_EXIST;
 
     Set shift_set = ((Worker)worker_element)->shift_set;
 
-    SetElement shift_element = NULL;
-    HrmResult hrm_result = findShift(day, type, shift_set, &shift_element);
+    SetElement shift_element    = NULL;
+    HrmResult hrm_result        = findShift(day, type, shift_set, &shift_element);
     if (hrm_result != HRM_SUCCESS)
         return HRM_SHIFT_DOES_NOT_EXIST;
 
@@ -517,34 +510,34 @@ HrmResult HrMgmtRemoveShiftFromWorker(HrMgmt hrm, int id, HrmShiftDay day, HrmSh
 HrmResult HrMgmtTransferShift(HrMgmt hrm, int fromId, int toId, HrmShiftDay day, HrmShiftType type)
 {
     /* THE ERROR GATES!! */
-    if (hrm == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(hrm,            return HRM_NULL_ARGUMENT; )
 
     Set set = hrm->worker_set;
-    if (setGetSize(set) <= 0)
-        return HRM_WORKER_DOES_NOT_EXIST;
 
-    if (fromId <= 0 || toId <= 0)
-        return HRM_INVALID_WORKER_ID;
+    EXPECT_GT(setGetSize(set), 0,   return HRM_WORKER_DOES_NOT_EXIST; )
+
+    EXPECT_GT(fromId, 0,            return HRM_INVALID_WORKER_ID; )
+    EXPECT_GT(toId, 0,              return HRM_INVALID_WORKER_ID; )
+
 
     /* Find both workers by their ID */
-    SetElement worker_from_element = NULL;
-    SetElement worker_to_element = NULL;
-    SetResult result_from = setFind(set, &worker_from_element, &fromId, matchByID);
-    SetResult result_to = setFind(set, &worker_to_element, &toId, matchByID);
+    SetElement worker_from_element  = NULL;
+    SetElement worker_to_element    = NULL;
+    SetResult result_from           = setFind(set, &worker_from_element, &fromId, matchByID);
+    SetResult result_to             = setFind(set, &worker_to_element, &toId, matchByID);
     if (result_from != SET_SUCCESS || result_to != SET_SUCCESS)
         return HRM_WORKER_DOES_NOT_EXIST;
 
-    Worker worker_from = (Worker)worker_from_element;
-    Worker worker_to = (Worker)worker_to_element;
+    Worker worker_from  = (Worker)worker_from_element;
+    Worker worker_to    = (Worker)worker_to_element;
 
-    Set shift_set_from = worker_from->shift_set;
-    Set shift_set_to = worker_to->shift_set;
+    Set shift_set_from  = worker_from->shift_set;
+    Set shift_set_to    = worker_to->shift_set;
 
 
     /* Find required shift in Worker A */
-    SetElement shift_element = NULL;
-    HrmResult hrm_result = findShift(day, type, shift_set_from, &shift_element);
+    SetElement shift_element    = NULL;
+    HrmResult hrm_result        = findShift(day, type, shift_set_from, &shift_element);
     if (hrm_result != HRM_SUCCESS)
         return hrm_result;
 
@@ -570,13 +563,12 @@ HrmResult HrMgmtTransferShift(HrMgmt hrm, int fromId, int toId, HrmShiftDay day,
 HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
 {
     /* THE ERROR GATES!! */
-    if (hrm == NULL || output == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(hrm,    return HRM_NULL_ARGUMENT; )
+    EXPECT_NOT_NULL(output, return HRM_NULL_ARGUMENT; )
 
-    Set worker_set = hrm->worker_set;
-    int set_size = setGetSize(worker_set);
-    if (set_size <= 0)
-        return HRM_NO_WORKERS;
+    Set worker_set  = hrm->worker_set;
+    int set_size    = setGetSize(worker_set);
+    EXPECT_GT(set_size, 0,  return HRM_NO_WORKERS; )
 
     if (role >= ALL_ROLES)
     {
@@ -585,16 +577,16 @@ HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
     }
 
     /* If the role isn't ALL_ROLES, we filter based on role */
-    Set filteredSet = NULL;
-    SetResult result = setFilter(worker_set, &filteredSet, &role, matchByRole);
+    Set filteredSet     = NULL;
+    SetResult result    = setFilter(worker_set, &filteredSet, &role, matchByRole);
     if (result != SET_SUCCESS)
     {
         setDestroy(filteredSet);
         return setResultToHrmResult(result, HRM_WORKER_ALREADY_EXISTS, HRM_WORKER_DOES_NOT_EXIST);
     }
 
-    if(setGetSize(filteredSet) <= 0)
-        return HRM_NO_WORKERS;
+    EXPECT_GT(setGetSize(filteredSet), 0, return HRM_NO_WORKERS;)
+
     setPrintSorted(filteredSet, output, setGetSize(filteredSet), sortByID);
     setDestroy(filteredSet);
     return HRM_SUCCESS;
@@ -604,16 +596,15 @@ HrmResult HrMgmtReportWorkers(HrMgmt hrm, HrmWorkerRole role, FILE* output)
 HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
 {
     /* THE ERROR GATES!! */
-    if (hrm == NULL)
-        return HRM_NULL_ARGUMENT;
-    if (id <= 0)
-        return HRM_INVALID_WORKER_ID;
+    EXPECT_NOT_NULL(hrm,    return HRM_NULL_ARGUMENT; )
+    EXPECT_NOT_NULL(output, return HRM_NULL_ARGUMENT; )
 
-    Set set = hrm->worker_set;
+    EXPECT_GT(id, 0,        return HRM_INVALID_WORKER_ID;)
+
+    Set set             = hrm->worker_set;
     int worker_set_size = setGetSize(set);
-    if (worker_set_size <= 0)
-        return HRM_NO_SHIFTS;
 
+    EXPECT_GT(worker_set_size, 0, return HRM_NO_WORKERS; )
 
     SetElement worker_element = NULL;
     SetResult result = setFind(set, &worker_element, &id, matchByID);
@@ -629,15 +620,13 @@ HrmResult HrMgmtReportShiftsOfWorker(HrMgmt hrm, int id, FILE* output)
 HrmResult HrMgmtReportWorkersInShift(HrMgmt hrm, HrmShiftDay day, HrmShiftType type, FILE* output)
 {
     /* THE ERROR GATES!! */
-    if (hrm == NULL)
-        return HRM_NULL_ARGUMENT;
+    EXPECT_NOT_NULL(hrm,            return HRM_NULL_ARGUMENT; )
 
-    Set set = hrm->worker_set;
+    Set set             = hrm->worker_set;
     int worker_set_size = setGetSize(set);
-    if (worker_set_size <= 0)
-        return HRM_NO_WORKERS;
+    EXPECT_GT(worker_set_size, 0,   return HRM_NO_WORKERS; )
 
-    Set workers_in_shift = NULL;
+    Set workers_in_shift    = NULL;
     HrmResult filter_result = filterWorkersByShift(&set, day, type, &workers_in_shift);
     if (filter_result != HRM_SUCCESS || setGetSize(workers_in_shift) <= 0)
         return HRM_NO_WORKERS;
